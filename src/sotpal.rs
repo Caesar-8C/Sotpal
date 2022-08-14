@@ -1,17 +1,18 @@
 mod player;
 
-use std::collections::HashMap;
+use indexmap::IndexMap;
+use rand::Rng;
 use player::Player;
 
 pub struct Sotpal {
-	players: HashMap<i32, Player>,
+	players: IndexMap<i32, Player>,
 	next_id: i32,
 }
 
 impl Sotpal {
 	pub fn new() -> Self {
 		Self {
-			players: HashMap::new(),
+			players: IndexMap::new(),
 			next_id: 0,
 		}
 	}
@@ -40,8 +41,17 @@ impl Sotpal {
 		};
 	}
 
-	pub fn get_topic(&mut self, player_id: i32) -> String {
-		"".to_string()
+	pub fn get_topic(&mut self, guesser_id: i32) -> String {
+		if self.players.len() < 2 {
+			return "".to_string();
+		}
+
+		let index = rand::thread_rng().gen_range(0..self.players.len());
+		match self.players.get_index_of(&guesser_id) {
+			None => "".to_string(),
+			Some(i) if i == index => self.get_topic(guesser_id),
+			_ => self.players.get_index_mut(index).unwrap().1.get_topic(),
+		}
 	}
 
 	pub fn print_players(&self) {
@@ -71,5 +81,24 @@ mod tests {
 		let test_topic = "test topic".to_string();
 		game.add_topic(test_player, test_topic.clone());
 		game.add_topic(test_player+1, test_topic);
+	}
+
+	#[test]
+	fn test_get_topic() {
+		let mut game = Sotpal::new();
+		let test_player = game.add_player("TestName".to_string());
+		let test_topic = "test topic".to_string();
+		game.add_topic(test_player, test_topic.clone());
+		assert_eq!(game.get_topic(-1), "".to_string());
+		assert_eq!(game.get_topic(test_player), "".to_string());
+
+		let test_player2 = game.add_player("TestName 2".to_string());
+		let test_topic2 = "test topic 2".to_string();
+		game.add_topic(test_player2, test_topic2.clone());
+		assert_eq!(game.get_topic(-1), "".to_string());
+		assert_eq!(game.get_topic(test_player2), test_topic);
+		
+		game.add_topic(test_player2, "test topic 2".to_string());
+		assert_eq!(game.get_topic(test_player), test_topic2);
 	}
 }
