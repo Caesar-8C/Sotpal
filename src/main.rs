@@ -1,15 +1,12 @@
-use tokio;
 mod sotpal;
+mod integrations;
+
+use tokio;
+
 use sotpal::Sotpal;
+use integrations::run;
 
 fn main() {
-	println!("Hello, world!");
 	let mut game = Sotpal::new();
-	let gizka_id = game.add_player("Gizka".to_string());
-	game.add_player("".to_string());
-	let pukhlik_id = game.add_player("Pukhlik".to_string());
-	game.add_topic(gizka_id, "my first topic".to_string());
-	game.add_topic(pukhlik_id, "".to_string());
-	game.print_players();
-	game.list_topics();
+	integrations::run(&mut game);
 }
