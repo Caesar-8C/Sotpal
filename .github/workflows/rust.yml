@@ -16,9 +16,13 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
-    - name: Build Terminal 
+    - name: Build Terminal
       run: cargo build --verbose --features terminal
+    - name: Build Telegram
+      run: cargo build --verbose --features telegram
     - name: Run tests
       run: cargo test --verbose
     - name: Test Terminal
       run: cargo build --verbose --features terminal
+    - name: Test Telegram
+      run: cargo build --verbose --features telegram

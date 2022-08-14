@@ -39,15 +39,16 @@ fn start_the_game(game: &mut Sotpal) {
 	println!("{}", game.get_topic(id.parse::<i32>().unwrap()));
 }
 
-pub fn run(game: &mut Sotpal) {	
+pub fn run() {
+	let mut game = Sotpal::new();
 	loop {
 		main_menu();
 		let input = get_input();
 
 		match input.as_str() {
-			"1" => add_player_menu(game),
-			"2" => add_topic_menu(game),
-			"3" => start_the_game(game),
+			"1" => add_player_menu(&mut game),
+			"2" => add_topic_menu(&mut game),
+			"3" => start_the_game(&mut game),
 			"4" => process::exit(0),
 			_ => println!("Try again: {} did not match any options", input.as_str()),
 		};
