@@ -16,12 +16,12 @@ fn main_menu() {
 	println!("4> exit");
 }
 
-fn add_player_menu(game: &mut Sotpal) {
+fn add_player_menu(game: &mut Sotpal, id: i32) {
 	println!("Input name");
 	let name = get_input();
-	let id = game.add_player(name.clone());
+	game.add_player(id, name.clone());
 	println!("Added player {name} with id {id}")
-}
+ }
 
 fn add_topic_menu(game: &mut Sotpal) {
 	println!("Input player id");
@@ -41,12 +41,13 @@ fn start_the_game(game: &mut Sotpal) {
 
 pub fn run() {
 	let mut game = Sotpal::new();
+	let mut next_id: i32 = 0;
 	loop {
 		main_menu();
 		let input = get_input();
 
 		match input.as_str() {
-			"1" => add_player_menu(&mut game),
+			"1" => { add_player_menu(&mut game, next_id); next_id += 1; },
 			"2" => add_topic_menu(&mut game),
 			"3" => start_the_game(&mut game),
 			"4" => process::exit(0),

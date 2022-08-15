@@ -17,13 +17,16 @@ pub async fn run() {
 		let update = update.unwrap();
 		if let UpdateKind::Message(message) = update.kind {
 			if let MessageKind::Text { ref data, .. } = message.kind {
-				println!("<{}>: {}", &message.from.first_name, data);
-
-				api.send(message.text_reply(format!(
-					"Hi, {}! You just wrote '{}'",
-					&message.from.first_name, data
-				)))
-				.await;
+				if message.from.id == UserId::new(383471334) {
+					api.send(message.text_reply("Hi, Boss")).await;
+				}
+				else {
+					api.send(message.text_reply(format!(
+						"Hi, {}! You just wrote '{}'",
+						&message.from.first_name, data
+					)))
+					.await;
+				}
 			}
 		}
 	}
