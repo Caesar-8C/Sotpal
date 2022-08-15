@@ -20,9 +20,11 @@ jobs:
       run: cargo build --verbose --features terminal
     - name: Build Telegram
       run: cargo build --verbose --features telegram
+      continue-on-error: true
     - name: Run tests
       run: cargo test --verbose
     - name: Test Terminal
       run: cargo build --verbose --features terminal
     - name: Test Telegram
       run: cargo build --verbose --features telegram
+      continue-on-error: true

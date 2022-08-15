@@ -6,32 +6,25 @@ use player::Player;
 
 pub struct Sotpal {
 	players: IndexMap<i32, Player>,
-	next_id: i32,
 }
 
 impl Sotpal {
 	pub fn new() -> Self {
 		Self {
 			players: IndexMap::new(),
-			next_id: 0,
 		}
 	}
 
-	pub fn add_player(&mut self, name: String) -> i32 {
-		if name == "".to_string() {
-			return -1;
+	pub fn add_player(&mut self, id:i32, name: String) {
+		if name == "".to_string() || self.players.get_index_of(&id).is_some() {
+			return;
 		}
-
-		let player_id = self.next_id;
 
 		let player = Player::new (
 			name,
 		);
 
-		self.players.insert(player_id, player);
-		self.next_id += 1;
-
-		player_id
+		self.players.insert(id, player);
 	}
 
 	pub fn add_topic(&mut self, player_id: i32, topic: String) {
@@ -74,31 +67,34 @@ mod tests {
 	#[test]
 	fn test_add_player_topic() {
 		let mut game = Sotpal::new();
-		let test_player = game.add_player("TestName".to_string());
-		assert_eq!(test_player, 0);
-		assert_eq!(game.next_id, 1);
+		let player1_id = 0;
+		game.add_player(player1_id, "TestName".to_string());
+		game.add_player(player1_id, "TestName2".to_string());
+		assert_eq!(1, game.players.len());
 
 		let test_topic = "test topic".to_string();
-		game.add_topic(test_player, test_topic.clone());
-		game.add_topic(test_player+1, test_topic);
+		game.add_topic(player1_id, test_topic.clone());
+		game.add_topic(player1_id+1, test_topic);
 	}
 
 	#[test]
 	fn test_get_topic() {
 		let mut game = Sotpal::new();
-		let test_player = game.add_player("TestName".to_string());
+		let player1_id = 0;
+		game.add_player(player1_id, "TestName".to_string());
 		let test_topic = "test topic".to_string();
-		game.add_topic(test_player, test_topic.clone());
+		game.add_topic(player1_id, test_topic.clone());
 		assert_eq!(game.get_topic(-1), "".to_string());
-		assert_eq!(game.get_topic(test_player), "".to_string());
+		assert_eq!(game.get_topic(player1_id), "".to_string());
 
-		let test_player2 = game.add_player("TestName 2".to_string());
+		let player2_id = 1;
+		game.add_player(player2_id, "TestName 2".to_string());
 		let test_topic2 = "test topic 2".to_string();
-		game.add_topic(test_player2, test_topic2.clone());
+		game.add_topic(player2_id, test_topic2.clone());
 		assert_eq!(game.get_topic(-1), "".to_string());
-		assert_eq!(game.get_topic(test_player2), test_topic);
+		assert_eq!(game.get_topic(player2_id), test_topic);
 		
-		game.add_topic(test_player2, "test topic 2".to_string());
-		assert_eq!(game.get_topic(test_player), test_topic2);
+		game.add_topic(player2_id, "test topic 2".to_string());
+		assert_eq!(game.get_topic(player1_id), test_topic2);
 	}
 }
