@@ -15,9 +15,13 @@ impl Player {
 		}
 	}
 
-	pub fn add_topic(&mut self, topic: String) {
+	pub fn add_topic(&mut self, topic: String) -> bool {
 		if topic != "".to_string() {
 			self.topics.push(topic);
+			true
+		}
+		else {
+			false
 		}
 	}
 
@@ -31,13 +35,17 @@ impl Player {
 		}
 	}
 
-	pub fn print(&self) {
-		println! (
+	pub fn is_ready(&self) -> bool {
+		self.topics.len() >= 1
+	}
+
+	pub fn print(&self) -> String {
+		format!(
 			"{} has {} points and {} topics",
 			self.name,
 			self.points,
 			self.topics.len()
-		);
+		)
 	}
 
 	pub fn list_topics(&self) {

@@ -15,9 +15,16 @@ impl Sotpal {
 		}
 	}
 
-	pub fn add_player(&mut self, id:i32, name: String) {
+	pub fn is_a_player(&self, id: i32) -> bool {
+		match self.players.get_index_of(&id) {
+			Some(_) => true,
+			None => false,
+		}
+	}
+
+	pub fn add_player(&mut self, id:i32, name: String) -> bool {
 		if name == "".to_string() || self.players.get_index_of(&id).is_some() {
-			return;
+			return false;
 		}
 
 		let player = Player::new (
@@ -25,13 +32,38 @@ impl Sotpal {
 		);
 
 		self.players.insert(id, player);
+
+		true
 	}
 
-	pub fn add_topic(&mut self, player_id: i32, topic: String) {
+	pub fn remove_player(&mut self, id: i32) -> bool {
+		if self.players.get_index_of(&id).is_none() {
+			return false;
+		}
+
+		self.players.remove(&id);
+
+		true
+	}
+
+	pub fn is_playable(&mut self) -> bool {
+		if self.players.len() < 3 {
+			return false;
+		}
+		for (id, player) in &self.players {
+			if !player.is_ready() {
+				return false;
+			}
+		}
+		true
+	}
+
+	pub fn add_topic(&mut self, player_id: i32, topic: String) -> bool {
 		match self.players.get_mut(&player_id) {
 			Some(player) => player.add_topic(topic),
-			None => return,
+			None => return false,
 		};
+		true
 	}
 
 	pub fn get_topic(&mut self, guesser_id: i32) -> String {
@@ -47,10 +79,13 @@ impl Sotpal {
 		}
 	}
 
-	pub fn print_players(&self) {
+	pub fn print_players(&self) -> String {
+		let mut string = "".to_string();
 		for (_, player) in &self.players {
-			player.print();
+			string.push_str(&player.print());
+			string.push_str("\n");
 		}
+		string
 	}
 
 	pub fn list_topics(&self) {
