@@ -75,73 +75,60 @@ impl TelegramBot {
 		let mut stream = self.api.stream();
 		while let Some(update) = stream.next().await {
 			let update = update.unwrap();
-			if let UpdateKind::Message(message) = update.kind {
+			if let UpdateKind::Message(message) = update.kind.clone() {
 				if let MessageKind::Text { ref data, .. } = message.kind {
-					match data.as_str() {
-						"/start" => match self.players.get(&message.from.id) {
-							Some(_) => {
-								self.api.send(message.from.id.text("You're alrerady playing")).await;
-							},
-							None => {
-								self.add_player(message.from).await;
-							},
-						},
-						"/quit" => match self.players.get(&message.from.id) {
-							Some(_) => {
-								self.remove_player(message.from.id).await;
-							}
-							None => {
-								self.api.send(message.from.id.text("You're not playing")).await;
-							}
-						},
-						"/play" => match self.players.get(&message.from.id) {
-							Some(_) => {
-								self.play_game(message.from.id).await;
-							}
-							None => {
-								self.api.send(message.from.id.text("You're not playing")).await;
-							}
-						},
-						"/print" => { 
-							if message.from.id == UserId::new(383471334) {
+
+					if message.from.id == UserId::new(383471334) {
+						match data.as_str() {
+							"/print" => {
 								self.api.send(message.from.id.text(&self.game.print_players())).await;
-							}
-							else {
-								self.api.send(message.from.id.text(
-									"Seems that someone lacks authorisation"
-								)).await;
-								let last = message.from.last_name.unwrap().as_str();
-								self.api.send(UserId::new(383471334).text(
-									message.from.first_name
-								)).await;
-							}
-						},
-						"/reset" => { 
-							if message.from.id == UserId::new(383471334) {
+							},
+							"/reset" => {
 								self.players = HashMap::new();
 								self.game = Sotpal::new();
 								self.api.send(message.from.id.text("The game has been reset")).await;
+							},
+							"/test" => {
+								let mut markup_message = message.from.id.text("Test markup message");
+
+								let button = InlineKeyboardButton::callback("test text", "tcb");
+								let mut row: Vec<InlineKeyboardButton> = Vec::new();
+								row.push(button);
+								let mut keyboard = InlineKeyboardMarkup::new();
+								keyboard.add_row(row);
+
+								markup_message.reply_markup(keyboard);
+								self.api.send(markup_message).await;
 							}
-							else {
-								self.api.send(message.from.id.text(
-									"Seems that someone lacks authorisation"
-								)).await;
-								let last = message.from.last_name.unwrap().as_str();
-								self.api.send(UserId::new(383471334).text(
-									message.from.first_name
-								)).await;
-							}
-						},
-						_ => match self.players.get(&message.from.id) {
-							Some(_) => {
-								self.add_topic(message.from.id, data.clone()).await;
-							}
-							None => {
-								self.api.send(message.from.id.text("You're not playing")).await;
-							}
-						},
+							_ => (),
+						}
 					}
+
+					match (self.players.get(&message.from.id), data.as_str()) {
+						(Some(_), "/start") => {
+							self.api.send(message.from.id.text("You're alrerady playing")).await;
+						},
+						(None, "/start") => {
+							self.add_player(message.from).await;
+						},
+						(Some(_), "/quit") => {
+							self.remove_player(message.from.id).await;
+						},
+						(Some(_), "/play") => {
+							self.play_game(message.from.id).await;
+						},
+						(Some(_), _) => {
+							self.add_topic(message.from.id, data.clone()).await;
+						},
+						(None, _) => {
+							self.api.send(message.from.id.text("You're not playing")).await;
+						}
+					}
+
 				}
+			}
+			if let UpdateKind::CallbackQuery(cb) = update.kind {
+				self.api.send(cb.from.text("Gotcha")).await;
 			}
 		}
 	}
