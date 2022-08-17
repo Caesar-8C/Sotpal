@@ -1,16 +1,11 @@
-mod terminal;
 mod telegram;
+use telegram::run;
 
-use crate::Sotpal;
+#[cfg(terminal)]
+mod terminal;
+#[cfg(terminal)]
+use terminal::run;
 
-pub fn run() {
-	if cfg!(feature = "terminal") {
-		terminal::run();
-	}
-	else if cfg!(feature = "telegram") {
-		telegram::run();
-	}
-	else {
-		println!("No integration has been enabled");
-	}
+pub fn run_integration() {
+	run();
 }
