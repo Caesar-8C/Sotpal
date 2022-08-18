@@ -1,4 +1,4 @@
-mod player;
+pub mod player;
 
 use indexmap::IndexMap;
 use rand::Rng;
@@ -7,7 +7,7 @@ use player::Player;
 use crate::utils::{Error, Result};
 
 pub struct Sotpal {
-	players: IndexMap<i32, Player>,
+	pub players: IndexMap<i32, Player>,
 }
 
 impl Sotpal {
