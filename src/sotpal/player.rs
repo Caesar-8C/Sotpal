@@ -1,9 +1,11 @@
 use rand::Rng;
 
+use crate::utils::{Error, Result};
+
 pub struct Player {
-	name: String,
-	points: i32,
-	topics: Vec<String>,
+	pub name: String,
+	pub points: i32,
+	pub topics: Vec<String>,
 }
 
 impl Player {
@@ -15,33 +17,37 @@ impl Player {
 		}
 	}
 
-	pub fn add_topic(&mut self, topic: String) {
+	pub fn add_topic(&mut self, topic: String) -> Result<()> {
 		if topic != "".to_string() {
 			self.topics.push(topic);
+			Ok(())
+		}
+		else {
+			Err(Error::General("Tried to add empty topic".to_string()))
 		}
 	}
 
-	pub fn get_topic(&mut self) -> String {
+	pub fn get_topic(&mut self) -> Result<String> {
 		if self.topics.len() == 0 {
-			"".to_string()
+			Err(Error::General("No topics to get".to_string()))
 		}
 		else {
 			let index = rand::thread_rng().gen_range(0..self.topics.len());
-			self.topics.remove(index)
+			Ok(self.topics.remove(index))
 		}
 	}
 
-	pub fn print(&self) {
-		println! (
+	pub fn is_ready(&self) -> bool {
+		self.topics.len() >= 1
+	}
+
+	pub fn print(&self) -> String {
+		format!(
 			"{} has {} points and {} topics",
 			self.name,
 			self.points,
 			self.topics.len()
-		);
-	}
-
-	pub fn list_topics(&self) {
-		println!("{:?}", self.topics);
+		)
 	}
 }
 
@@ -58,10 +64,10 @@ mod tests {
 		assert_eq!(player.topics.len(), 0);
 
 		let topic = "test topic".to_string();
-		player.add_topic(topic.clone());
+		assert!(player.add_topic(topic.clone()).is_ok());
 		assert_eq!(player.topics.len(), 1);
 		assert_eq!(player.topics[0], topic);
-		player.add_topic("".to_string());
+		assert!(player.add_topic("".to_string()).is_err());
 		assert_eq!(player.topics.len(), 1);
 	}
 
@@ -71,23 +77,25 @@ mod tests {
 		let mut player = Player::new(player_name.clone());
 
 		let topic = "test topic".to_string();
-		player.add_topic(topic.clone());
-		assert_eq!(player.get_topic(), topic);
+		assert!(player.add_topic(topic.clone()).is_ok());
+		if let Ok(t) = player.get_topic() {
+			assert_eq!(t, topic);
+		};
 
-		player.add_topic("test topic".to_string());
-		player.add_topic("test topic 2".to_string());
-		player.add_topic("test topic 3".to_string());
-		player.add_topic("test topic 4".to_string());
+		assert!(player.add_topic("test topic".to_string()).is_ok());
+		assert!(player.add_topic("test topic 2".to_string()).is_ok());
+		assert!(player.add_topic("test topic 3".to_string()).is_ok());
+		assert!(player.add_topic("test topic 4".to_string()).is_ok());
 		
 		assert_eq!(player.topics.len(), 4);
-		player.get_topic();
+		assert!(player.get_topic().is_ok());
 		assert_eq!(player.topics.len(), 3);
-		player.get_topic();
+		assert!(player.get_topic().is_ok());
 		assert_eq!(player.topics.len(), 2);
-		player.get_topic();
+		assert!(player.get_topic().is_ok());
 		assert_eq!(player.topics.len(), 1);
-		player.get_topic();
+		assert!(player.get_topic().is_ok());
 		assert_eq!(player.topics.len(), 0);
-		assert_eq!(player.get_topic(), "".to_string());
+		assert!(player.get_topic().is_err());
 	}
 }

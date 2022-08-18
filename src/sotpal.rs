@@ -2,7 +2,9 @@ mod player;
 
 use indexmap::IndexMap;
 use rand::Rng;
+
 use player::Player;
+use crate::utils::{Error, Result};
 
 pub struct Sotpal {
 	players: IndexMap<i32, Player>,
@@ -15,48 +17,77 @@ impl Sotpal {
 		}
 	}
 
-	pub fn add_player(&mut self, id:i32, name: String) {
-		if name == "".to_string() || self.players.get_index_of(&id).is_some() {
-			return;
-		}
-
-		let player = Player::new (
-			name,
-		);
-
-		self.players.insert(id, player);
+	pub fn is_a_player(&self, id: i32) -> bool {
+		self.players.get_index_of(&id).is_some()
 	}
 
-	pub fn add_topic(&mut self, player_id: i32, topic: String) {
+	pub fn add_player(&mut self, id:i32, name: String) -> Result<()> {
+		if name == "".to_string() {
+			Err(Error::General("Tried to create a player with empty name".to_string()))
+		}
+		else if self.players.get_index_of(&id).is_some() {
+			Err(Error::General("Tried to create a player that already exist".to_string()))
+		}
+		else {
+			let player = Player::new(name);
+			self.players.insert(id, player);
+
+			Ok(())
+		}
+	}
+
+	pub fn remove_player(&mut self, id: i32) -> Result<()> {
+		if self.players.get_index_of(&id).is_none() {
+			Err(Error::General("Tried to remove a non existant player".to_string()))
+		}
+		else {
+			self.players.remove(&id);
+			Ok(())
+		}
+	}
+
+	pub fn ready(&mut self) -> Result<()> {
+		if self.players.len() < 3 {
+			return Err(Error::General("Too few players".to_string()));
+		}
+		for (_, player) in &self.players {
+			if !player.is_ready() {
+				return Err(Error::General(format!("Player {} has 0 topics", player.name)));
+			}
+		}
+		Ok(())
+	}
+
+	pub fn add_topic(&mut self, player_id: i32, topic: String) -> Result<()> {
 		match self.players.get_mut(&player_id) {
-			Some(player) => player.add_topic(topic),
-			None => return,
-		};
+			Some(player) => {
+				player.add_topic(topic)
+			},
+			None => Err(Error::General("Player does not exist".to_string())),
+		}
 	}
 
-	pub fn get_topic(&mut self, guesser_id: i32) -> String {
-		if self.players.len() < 2 {
-			return "".to_string();
-		}
+	pub fn get_topic(&mut self, guesser_id: i32) -> Result<String> {
+		self.ready()?;
 
 		let index = rand::thread_rng().gen_range(0..self.players.len());
 		match self.players.get_index_of(&guesser_id) {
-			None => "".to_string(),
+			None => Err(Error::General("Unknown guesser".to_string())),
 			Some(i) if i == index => self.get_topic(guesser_id),
-			_ => self.players.get_index_mut(index).unwrap().1.get_topic(),
+			_ => match self.players.get_index_mut(index) {
+				None => Err(Error::General("Something's wrong with randomizer".to_string())),
+				Some(players) => players.1.get_topic(),
+			},
 		}
 	}
 
-	pub fn print_players(&self) {
+	pub fn print_players(&self) -> String {
+		let mut string = "".to_string();
 		for (_, player) in &self.players {
-			player.print();
+			string.push_str(&player.print());
+			string.push_str("\n");
 		}
-	}
-
-	pub fn list_topics(&self) {
-		for (_, player) in &self.players {
-			player.list_topics();
-		}
+		string
 	}
 }
 
@@ -68,33 +99,41 @@ mod tests {
 	fn test_add_player_topic() {
 		let mut game = Sotpal::new();
 		let player1_id = 0;
-		game.add_player(player1_id, "TestName".to_string());
-		game.add_player(player1_id, "TestName2".to_string());
+		assert!(game.add_player(player1_id, "TestName".to_string()).is_ok());
+		assert!(game.add_player(player1_id, "TestName2".to_string()).is_err());
 		assert_eq!(1, game.players.len());
 
 		let test_topic = "test topic".to_string();
-		game.add_topic(player1_id, test_topic.clone());
-		game.add_topic(player1_id+1, test_topic);
+		assert!(game.add_topic(player1_id, test_topic.clone()).is_ok());
+		assert!(game.add_topic(player1_id+1, test_topic).is_err());
 	}
 
 	#[test]
 	fn test_get_topic() {
 		let mut game = Sotpal::new();
 		let player1_id = 0;
-		game.add_player(player1_id, "TestName".to_string());
+		assert!(game.add_player(player1_id, "TestName".to_string()).is_ok());
 		let test_topic = "test topic".to_string();
-		game.add_topic(player1_id, test_topic.clone());
-		assert_eq!(game.get_topic(-1), "".to_string());
-		assert_eq!(game.get_topic(player1_id), "".to_string());
+		assert!(game.add_topic(player1_id, test_topic.clone()).is_ok());
+		assert!(game.get_topic(-1).is_err());
+		assert!(game.get_topic(player1_id).is_err());
 
 		let player2_id = 1;
-		game.add_player(player2_id, "TestName 2".to_string());
+		assert!(game.add_player(player2_id, "TestName 2".to_string()).is_ok());
 		let test_topic2 = "test topic 2".to_string();
-		game.add_topic(player2_id, test_topic2.clone());
-		assert_eq!(game.get_topic(-1), "".to_string());
-		assert_eq!(game.get_topic(player2_id), test_topic);
+		assert!(game.add_topic(player2_id, test_topic2.clone()).is_ok());
+
+		let player3_id = 3;
+		assert!(game.add_player(player3_id, "TestName 3".to_string()).is_ok());
+		let test_topic3 = "test topic 3".to_string();
+		assert!(game.add_topic(player3_id, test_topic3.clone()).is_ok());
+
+		assert!(game.ready().is_ok());
+		assert!(game.get_topic(-1).is_err());
+		assert!(game.get_topic(player2_id).is_ok());
 		
-		game.add_topic(player2_id, "test topic 2".to_string());
-		assert_eq!(game.get_topic(player1_id), test_topic2);
+		assert!(game.add_topic(player1_id, "test topic 1".to_string()).is_ok());
+		assert!(game.add_topic(player3_id, "test topic 3".to_string()).is_ok());
+		assert!(game.get_topic(player1_id).is_ok());
 	}
 }
