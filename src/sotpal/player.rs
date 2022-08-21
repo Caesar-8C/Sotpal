@@ -27,7 +27,7 @@ impl Player {
 		}
 	}
 
-	pub fn get_topic(&mut self) -> Result<String> {
+	pub fn draw_topic(&mut self) -> Result<String> {
 		if self.topics.len() == 0 {
 			Err(Error::General("No topics to get".to_string()))
 		}
@@ -72,13 +72,13 @@ mod tests {
 	}
 
 	#[test]
-	fn test_get_topic() {
+	fn test_draw_topic() {
 		let player_name = "Test Name".to_string();
 		let mut player = Player::new(player_name.clone());
 
 		let topic = "test topic".to_string();
 		assert!(player.add_topic(topic.clone()).is_ok());
-		if let Ok(t) = player.get_topic() {
+		if let Ok(t) = player.draw_topic() {
 			assert_eq!(t, topic);
 		};
 
@@ -88,14 +88,14 @@ mod tests {
 		assert!(player.add_topic("test topic 4".to_string()).is_ok());
 		
 		assert_eq!(player.topics.len(), 4);
-		assert!(player.get_topic().is_ok());
+		assert!(player.draw_topic().is_ok());
 		assert_eq!(player.topics.len(), 3);
-		assert!(player.get_topic().is_ok());
+		assert!(player.draw_topic().is_ok());
 		assert_eq!(player.topics.len(), 2);
-		assert!(player.get_topic().is_ok());
+		assert!(player.draw_topic().is_ok());
 		assert_eq!(player.topics.len(), 1);
-		assert!(player.get_topic().is_ok());
+		assert!(player.draw_topic().is_ok());
 		assert_eq!(player.topics.len(), 0);
-		assert!(player.get_topic().is_err());
+		assert!(player.draw_topic().is_err());
 	}
 }
