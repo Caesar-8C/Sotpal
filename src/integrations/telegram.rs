@@ -150,7 +150,7 @@ impl TelegramBot {
 		self.api.send(reply).await;
 	}
 
-	async fn message_on_guessing(&self, user: User) -> Result<()> {
+	async fn message_on_this_guessing(&self, user: User) -> Result<()> {
 		let game_id = self.players.get(&user.id).unwrap().game_id;
 		let game = self.games.get(&game_id).unwrap();
 
@@ -158,6 +158,17 @@ impl TelegramBot {
 		reply.reply_markup(keyboards::guessing(game));
 		self.api.send(reply).await;
 
+		Ok(())
+	}
+
+	async fn on_other_guessing(&self, user: User) -> Result<()> {
+		let player = self.players.get(&user.id).unwrap();
+		let game = self.games.get(&player.game_id).unwrap();
+		let guesser_id = game.guesser.clone()?;
+		let guesser = game.players.get(&guesser_id).unwrap();
+		let guesser_name = guesser.name.clone();
+		let reply = user.text(replies::other_guessing(guesser_name, game.topic.clone()?));
+		self.api.send(reply).await;
 		Ok(())
 	}
 
@@ -170,7 +181,8 @@ impl TelegramBot {
 					Some(PlayerState::Playing) => self.add_topic(message.from, data.clone()).await?,
 					Some(PlayerState::Joining) => self.try_join_game(message.from, data.clone()).await?,
 					Some(PlayerState::Greeting) => self.message_on_greeting(message.from).await,
-					Some(PlayerState::Guessing) => self.message_on_guessing(message.from).await?,
+					Some(PlayerState::ThisGuessing) => self.message_on_this_guessing(message.from).await?,
+					Some(PlayerState::OtherGuessing) => self.on_other_guessing(message.from).await?,
 				};
 				Ok(())
 			},
@@ -256,21 +268,27 @@ impl TelegramBot {
 	}
 
 	async fn guess(&mut self, user: User) -> Result<()> {
-		let mut player = self.players.get_mut(&user.id).unwrap();
-		let player_id = player.id;
-		let game_id = player.game_id;
+		let guesser = self.players.get(&user.id).unwrap();
+		let guesser_id = guesser.id;
+		let game_id = guesser.game_id;
 		let mut game = self.games.get_mut(&game_id).unwrap();
 
-		let topic = game.draw_topic(player_id)?;
+		let topic = game.draw_topic(guesser_id)?;
 
-		player.state = PlayerState::Guessing;
-
-		let mut reply = user.text(replies::guessing(topic.clone()));
-		reply.reply_markup(keyboards::guessing(game));
-		self.api.send(reply).await;
-
-		for (id, _) in &self.players { // TODO for all players IN THE GAME
-			// self.api.send(id.text(&topic)).await; // send replies::other_guessing(user.first_name, topic)
+		for (user_id, player) in self.players.iter_mut() {
+			if player.game_id == game_id {
+				if player.id == guesser_id {
+					player.state = PlayerState::ThisGuessing;
+					let mut reply = user.text(replies::guessing(topic.clone()));
+					reply.reply_markup(keyboards::guessing(game));
+					self.api.send(reply).await;
+				}
+				else {
+					player.state = PlayerState::OtherGuessing;
+					let reply = user_id.text(replies::other_guessing(user.first_name.clone(), topic.clone()));
+					self.api.send(reply).await;
+				}
+			}
 		}
 
 		Ok(())
@@ -286,8 +304,28 @@ impl TelegramBot {
 		Ok(())
 	}
 
-	async fn guessing_callback(&self, user:User, data: String) -> Result<()> {
-		// TODO
+	async fn this_guessing_callback(&mut self, user:User, data: String) -> Result<()> {
+		let guess = data.parse::<i32>().unwrap();
+		let guesser = self.players.get(&user.id).unwrap();
+		let guesser_id = guesser.id;
+		let game_id = guesser.game_id;
+		let mut game = self.games.get_mut(&game_id).unwrap();
+
+		game.give_point(guess);
+		if guess == game.reader.clone()? {
+			game.give_point(guesser_id);
+		}
+
+		for (user_id, player) in self.players.iter_mut() {
+			if player.game_id == game_id {
+				player.state = PlayerState::Playing;
+
+				let mut reply = user_id.text(replies::playing(game));
+				reply.reply_markup(keyboards::playing());
+				self.api.send(reply).await;
+			}
+		}
+
 		Ok(())
 	}
 
@@ -300,7 +338,8 @@ impl TelegramBot {
 					Some(PlayerState::Local(topics)) => self.local_callback(cb.from, data.clone(), topics).await?,
 					Some(PlayerState::Greeting) => self.greeting_callback(cb.from, data.clone()).await?,
 					Some(PlayerState::Playing) => self.playing_callback(cb.from, data.clone()).await?,
-					Some(PlayerState::Guessing) => self.guessing_callback(cb.from, data.clone()).await?,
+					Some(PlayerState::ThisGuessing) => self.this_guessing_callback(cb.from, data.clone()).await?,
+					Some(PlayerState::OtherGuessing) => self.on_other_guessing(cb.from).await?,
 				};
 				Ok(())
 			},

@@ -23,9 +23,8 @@ pub enum PlayerState {
 	Local(Vec<String>),
 	Playing,
 	Joining,
-	Guessing,
-	// TODO add ThisGuessing and OtherGuessing
-	// TODO OtherGuessing can't do anything until guesser chooses someone
+	ThisGuessing,
+	OtherGuessing,
 }
 
 pub mod keyboards {
@@ -58,9 +57,9 @@ pub mod keyboards {
 		let mut button: InlineKeyboardButton;
 		let mut keyboard = InlineKeyboardMarkup::new();
 
-		for (_, player) in &game.players {
+		for (id, player) in &game.players {
 			row = Vec::new();
-			button  = InlineKeyboardButton::callback(&player.name, &player.name);
+			button  = InlineKeyboardButton::callback(&player.name, &format!("{}", id));
 			row.push(button);
 			keyboard.add_row(row);
 		}
@@ -111,5 +110,9 @@ pub mod replies {
 
 	pub fn other_guessing(name: String, topic: String) -> String {
 		format!("{} is guessing, who's lying about:\n{}", name, topic)
+	}
+
+	pub fn guessed_player() -> String {
+		"Guesser believed you were saying the truth\nYou get a point!".to_string()
 	}
 }

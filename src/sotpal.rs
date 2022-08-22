@@ -9,6 +9,8 @@ use crate::utils::{Error, Result};
 pub struct Sotpal {
 	pub players: IndexMap<i32, Player>,
 	pub topic: Result<String>,
+	pub guesser: Result<i32>,
+	pub reader: Result<i32>,
 }
 
 impl Sotpal {
@@ -16,6 +18,8 @@ impl Sotpal {
 		Self {
 			players: IndexMap::new(),
 			topic: Err(Error::General("Topic requested, but none set".to_string())),
+			guesser: Err(Error::General("Guesser requested, but none set".to_string())),
+			reader: Err(Error::General("Reader requested, but none set".to_string())),
 		}
 	}
 
@@ -48,6 +52,10 @@ impl Sotpal {
 		}
 	}
 
+	pub fn give_point(&mut self, id: i32) {
+		self.players.get_mut(&id).unwrap().give_point();
+	}
+
 	pub fn ready(&mut self) -> Result<()> {
 		if self.players.len() < 3 {
 			return Err(Error::General("Too few players".to_string()));
@@ -73,6 +81,8 @@ impl Sotpal {
 		self.ready()?;
 
 		let index = rand::thread_rng().gen_range(0..self.players.len());
+		self.guesser = Ok(guesser_id);
+		self.reader = Ok(index as i32);
 		self.topic = match self.players.get_index_of(&guesser_id) {
 			None => Err(Error::General("Unknown guesser".to_string())),
 			Some(i) if i == index => self.draw_topic(guesser_id),

@@ -27,6 +27,10 @@ impl Player {
 		}
 	}
 
+	pub fn give_point(&mut self) {
+		self.points += 1;
+	}
+
 	pub fn draw_topic(&mut self) -> Result<String> {
 		if self.topics.len() == 0 {
 			Err(Error::General("No topics to get".to_string()))
