@@ -79,7 +79,7 @@ impl TelegramBot {
 		player.game_id = game_id;
 		player.state = PlayerState::Playing;
 
-		let mut reply = user.text(replies::playing(game));
+		let mut reply = user.text(replies::playing(game, game_id));
 		reply.reply_markup(keyboards::playing());
 		self.api.send(reply).await;
 		Ok(())
@@ -128,7 +128,7 @@ impl TelegramBot {
 			topic,
 		)?;
 
-		let mut reply = user.text(replies::playing(game));
+		let mut reply = user.text(replies::playing(game, game_id));
 		reply.reply_markup(keyboards::playing());
 		self.api.send(reply).await;
 
@@ -231,7 +231,7 @@ impl TelegramBot {
 		game.add_player(player.id, user.first_name.clone())?;
 		player.game_id = game_id;
 
-		let mut reply = user.text(replies::playing(&game));
+		let mut reply = user.text(replies::playing(&game, game_id));
 		self.games.insert(game_id, game);
 		reply.reply_markup(keyboards::playing());
 		self.api.send(reply).await;
@@ -320,7 +320,7 @@ impl TelegramBot {
 			if player.game_id == game_id {
 				player.state = PlayerState::Playing;
 
-				let mut reply = user_id.text(replies::playing(game));
+				let mut reply = user_id.text(replies::playing(game, game_id));
 				reply.reply_markup(keyboards::playing());
 				self.api.send(reply).await;
 			}
