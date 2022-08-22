@@ -104,7 +104,7 @@ pub mod replies {
 	pub fn guessing(topic: String) -> String {
 		let mut reply = "The game is on!\nTopic: ".to_string();
 		reply.push_str(&topic);
-		reply.push_str("Guess who's topic this is");
+		reply.push_str("\nGuess who's topic this is");
 		reply
 	}
 

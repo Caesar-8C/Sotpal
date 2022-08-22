@@ -79,20 +79,20 @@ impl TelegramBot {
 		player.game_id = game_id;
 		player.state = PlayerState::Playing;
 
-		let mut reply = user.text(replies::playing(game, game_id));
-		reply.reply_markup(keyboards::playing());
-		self.api.send(reply).await;
+		for (user_id, player) in self.players.iter_mut() {
+			if player.game_id == game_id {
+				let mut reply = user_id.text(replies::playing(game, game_id));
+				reply.reply_markup(keyboards::playing());
+				self.api.send(reply).await;
+			}
+		}
+
 		Ok(())
 	}
 
 	async fn fail_join_game(&mut self, user: User) {
 		self.api.send(user.text(replies::join_fail())).await;
-		let mut player = self.players.get_mut(&user.id).unwrap();
-		player.state = PlayerState::Greeting;
-
-		let mut reply = user.text(replies::greeting());
-		reply.reply_markup(keyboards::greeting());
-		self.api.send(reply).await;
+		self.to_greeting_state(user).await;
 	}
 
 	async fn try_join_game(&mut self, user: User, data: String) -> Result<()> {
@@ -104,22 +104,6 @@ impl TelegramBot {
 		Ok(())
 	}
 
-	// async fn remove_player(&mut self, user_id: UserId) -> Result<()> {
-	// 	self.game.remove_player(*self.players.get(&user_id))?;
-	// 	self.players.remove(&user_id);
-	// 	self.api.send(user_id.text("See you soon")).await;
-	// 	Ok(())
-	// }
-	//
-	// async fn play_game(&mut self, user_id: UserId) -> Result<()> {
-	// 	self.game.ready()?;
-	// 	let topic = self.game.get_topic(*self.players.get(&user_id).unwrap()).unwrap();
-	// 	for (id, _) in &self.players {
-	// 		self.api.send(id.text(&topic)).await;
-	// 	}
-	// 	Ok(())
-	// }
-
 	async fn add_topic(&mut self, user: User, topic: String) -> Result<()> {
 		let game_id = self.players.get(&user.id).unwrap().game_id;
 		let mut game = self.games.get_mut(&game_id).unwrap();
@@ -128,9 +112,13 @@ impl TelegramBot {
 			topic,
 		)?;
 
-		let mut reply = user.text(replies::playing(game, game_id));
-		reply.reply_markup(keyboards::playing());
-		self.api.send(reply).await;
+		for (user_id, player) in self.players.iter_mut() {
+			if player.game_id == game_id {
+				let mut reply = user_id.text(replies::playing(game, game_id));
+				reply.reply_markup(keyboards::playing());
+				self.api.send(reply).await;
+			}
+		}
 
 		Ok(())
 	}
@@ -230,6 +218,7 @@ impl TelegramBot {
 		let mut player = self.players.get_mut(&user.id).unwrap();
 		game.add_player(player.id, user.first_name.clone())?;
 		player.game_id = game_id;
+		player.state = PlayerState::Playing;
 
 		let mut reply = user.text(replies::playing(&game, game_id));
 		self.games.insert(game_id, game);
@@ -258,11 +247,21 @@ impl TelegramBot {
 	}
 
 	async fn playing_leave(&mut self, user: User) -> Result<()> {
-		let player = self.players.get(&user.id).unwrap();
+		let mut player = self.players.get_mut(&user.id).unwrap();
 		let player_id = player.id;
 		let game_id = player.game_id;
+		player.game_id = 0;
 		let mut game = self.games.get_mut(&game_id).unwrap();
 		game.remove_player(player_id)?;
+
+		for (user_id, player) in self.players.iter_mut() {
+			if player.game_id == game_id {
+				let mut reply = user_id.text(replies::playing(game, game_id));
+				reply.reply_markup(keyboards::playing());
+				self.api.send(reply).await;
+			}
+		}
+
 		self.to_greeting_state(user).await;
 		Ok(())
 	}
