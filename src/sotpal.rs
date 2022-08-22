@@ -1,4 +1,4 @@
-mod player;
+pub mod player;
 
 use indexmap::IndexMap;
 use rand::Rng;
@@ -7,13 +7,19 @@ use player::Player;
 use crate::utils::{Error, Result};
 
 pub struct Sotpal {
-	players: IndexMap<i32, Player>,
+	pub players: IndexMap<i32, Player>,
+	pub topic: Result<String>,
+	pub guesser: Result<i32>,
+	pub reader: Result<i32>,
 }
 
 impl Sotpal {
 	pub fn new() -> Self {
 		Self {
 			players: IndexMap::new(),
+			topic: Err(Error::General("Topic requested, but none set".to_string())),
+			guesser: Err(Error::General("Guesser requested, but none set".to_string())),
+			reader: Err(Error::General("Reader requested, but none set".to_string())),
 		}
 	}
 
@@ -38,12 +44,16 @@ impl Sotpal {
 
 	pub fn remove_player(&mut self, id: i32) -> Result<()> {
 		if self.players.get_index_of(&id).is_none() {
-			Err(Error::General("Tried to remove a non existant player".to_string()))
+			Err(Error::General("Tried to remove a non existent player".to_string()))
 		}
 		else {
 			self.players.remove(&id);
 			Ok(())
 		}
+	}
+
+	pub fn give_point(&mut self, id: i32) {
+		self.players.get_mut(&id).unwrap().give_point();
 	}
 
 	pub fn ready(&mut self) -> Result<()> {
@@ -67,18 +77,25 @@ impl Sotpal {
 		}
 	}
 
-	pub fn get_topic(&mut self, guesser_id: i32) -> Result<String> {
+	pub fn draw_topic(&mut self, guesser_id: i32) -> Result<String> {
 		self.ready()?;
 
 		let index = rand::thread_rng().gen_range(0..self.players.len());
-		match self.players.get_index_of(&guesser_id) {
+		self.guesser = Ok(guesser_id);
+		self.reader = Ok(index as i32);
+		self.topic = match self.players.get_index_of(&guesser_id) {
 			None => Err(Error::General("Unknown guesser".to_string())),
-			Some(i) if i == index => self.get_topic(guesser_id),
+			Some(i) if i == index => self.draw_topic(guesser_id),
 			_ => match self.players.get_index_mut(index) {
 				None => Err(Error::General("Something's wrong with randomizer".to_string())),
-				Some(players) => players.1.get_topic(),
+				Some(player) => player.1.draw_topic(),
 			},
-		}
+		};
+		self.topic.clone()
+	}
+
+	pub fn reset_topic(&mut self) {
+		self.topic = Err(Error::General("Topic requested, but none set".to_string()));
 	}
 
 	pub fn print_players(&self) -> String {
@@ -109,14 +126,14 @@ mod tests {
 	}
 
 	#[test]
-	fn test_get_topic() {
+	fn test_draw_topic() {
 		let mut game = Sotpal::new();
 		let player1_id = 0;
 		assert!(game.add_player(player1_id, "TestName".to_string()).is_ok());
 		let test_topic = "test topic".to_string();
 		assert!(game.add_topic(player1_id, test_topic.clone()).is_ok());
-		assert!(game.get_topic(-1).is_err());
-		assert!(game.get_topic(player1_id).is_err());
+		assert!(game.draw_topic(-1).is_err());
+		assert!(game.draw_topic(player1_id).is_err());
 
 		let player2_id = 1;
 		assert!(game.add_player(player2_id, "TestName 2".to_string()).is_ok());
@@ -129,11 +146,11 @@ mod tests {
 		assert!(game.add_topic(player3_id, test_topic3.clone()).is_ok());
 
 		assert!(game.ready().is_ok());
-		assert!(game.get_topic(-1).is_err());
-		assert!(game.get_topic(player2_id).is_ok());
+		assert!(game.draw_topic(-1).is_err());
+		assert!(game.draw_topic(player2_id).is_ok());
 		
 		assert!(game.add_topic(player1_id, "test topic 1".to_string()).is_ok());
 		assert!(game.add_topic(player3_id, "test topic 3".to_string()).is_ok());
-		assert!(game.get_topic(player1_id).is_ok());
+		assert!(game.draw_topic(player1_id).is_ok());
 	}
 }

@@ -1,5 +1,6 @@
 use std::fmt;
 use Error::*;
+use std::num::ParseIntError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Error {
@@ -21,3 +22,9 @@ impl From<std::io::Error> for Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+impl From<ParseIntError> for Error {
+    fn from(e: ParseIntError) -> Self {
+        General(e.to_string())
+    }
+}
