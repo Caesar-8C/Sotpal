@@ -85,8 +85,8 @@ pub mod replies {
 		format!("The chosen topic is:\n{}\n\nYou still have {} other topics.", topic, topics_num)
 	}
 
-	pub fn playing(game: &Sotpal) -> String {
-		let mut reply = "The game is on!\n\nPoints : Names : Topics\n".to_string();
+	pub fn playing(game: &Sotpal, game_id: i32) -> String {
+		let mut reply = format!("The game is on!\nHere's the game id: {}\n\nPoints : Names : Topics\n", game_id);
 		for (_, player) in &game.players {
 			reply.push_str(&format!("{} : {} : {}\n", player.points, player.name, player.topics.len()))
 		}
