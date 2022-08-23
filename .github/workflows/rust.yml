@@ -31,5 +31,14 @@ jobs:
     if: github.ref == 'refs/heads/master'
     steps:
     - uses: actions/checkout@v3
+    - name: Install ARM target
+      run: rustup target add armv7-unknown-linux-gnueabihf && sudo apt install gcc-arm-linux-gnueabihf
     - name: Release Build
-      run: cargo build --release --features telegram
+      run: cargo build --release --features telegram --target armv7-unknown-linux-gnueabihf
+    - name: Save Artifacts
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: tg-release
+        path: target/armv7-unknown-linux-gnueabihf/release/sotpal_rust
+        retention-days: 2
