@@ -376,9 +376,9 @@ impl TelegramBot {
 }
 
 pub fn run() {
-	let master_id = fs::read_to_string("sotpal_master")
+	let master_id = fs::read_to_string("/home/kraken/proj/sotpal/sotpal_master")
 		.expect("Could not read from file").parse::<i64>().unwrap();
-	let token = fs::read_to_string("sotpal_token")
+	let token = fs::read_to_string("/home/kraken/proj/sotpal/sotpal_token")
 		.expect("Could not read from file");
 
 	let bot = TelegramBot::new(token, master_id);
