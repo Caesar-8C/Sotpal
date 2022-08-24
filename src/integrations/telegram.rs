@@ -54,6 +54,13 @@ impl TelegramBot {
 	}
 
 	async fn draw_local_topic(&mut self, user: User, topics: Vec<String>) {
+		if topics.len() == 0 {
+			let mut reply = user.text(replies::local(topics.len()));
+			reply.reply_markup(keyboards::local());
+			self.api.send(reply).await;
+			return;
+		}
+
 		let mut new_topics = topics.clone();
 		let index = rand::thread_rng().gen_range(0..topics.len());
 		let topic = new_topics.remove(index);
