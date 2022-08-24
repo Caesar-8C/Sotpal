@@ -72,7 +72,17 @@ pub mod replies {
 	use crate::Sotpal;
 
 	pub fn greeting() -> String {
-		"Hello new player!\nWelcome!".to_string()
+		let mut reply = "Hello and welcome to\nSome of These People are Lying!\n\n".to_string();
+		reply.push_str("The rules are simple: one player creates the game ");
+		reply.push_str("and sends the code for the others to join. ");
+		reply.push_str("Everyone goes to a random wiki page, reads it, ");
+		reply.push_str("and sends the page title to me. Guesser then presses ");
+		reply.push_str("the guess button. I choose the topic and send it to everyone. ");
+		reply.push_str("The person who read the topic tells what it was about, ");
+		reply.push_str("others lie and try to convince the guesser that it was ");
+		reply.push_str("them, who read the wiki. Guesser then tries to guess, ");
+		reply.push_str("who is telling the truth.\n\nHave fun!");
+		reply
 	}
 
 	pub fn local(topics_num: usize) -> String {
@@ -94,7 +104,7 @@ pub mod replies {
 	}
 
 	pub fn joining() -> String {
-		"Please send the game id to join\n(Send anything else to go back)".to_string()
+		"Please send the game id to join\n(Send any number to go back)".to_string()
 	}
 
 	pub fn join_fail() -> String {
