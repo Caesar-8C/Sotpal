@@ -32,13 +32,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install ARM target
-      run: rustup target add armv7-unknown-linux-gnueabihf && sudo apt install gcc-arm-linux-gnueabihf
+      run: rustup target add aarch64-unknown-linux-gnu && sudo apt install gcc-aarch64-linux-gnu
     - name: Release Build
-      run: cargo build --release --features telegram --target armv7-unknown-linux-gnueabihf
+      run: cargo build --release --features telegram --target aarch64-unknown-linux-gnu
     - name: Save Artifacts
       uses: actions/upload-artifact@v3
       if: success()
       with:
         name: tg-release
-        path: target/armv7-unknown-linux-gnueabihf/release/sotpal_rust
+        path: target/aarch64-unknown-linux-gnu/release/sotpal_rust
         retention-days: 2
