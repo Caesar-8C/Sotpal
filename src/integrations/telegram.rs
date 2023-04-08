@@ -375,9 +375,9 @@ impl TelegramBot {
 					},
 				};
 			}
-			else {
-				self.api.send(self.master.text("Receiving update failed")).await;
-			}
+			// else {
+			// 	self.api.send(self.master.text("Receiving update failed")).await;
+			// }
 		}
 	}
 }
