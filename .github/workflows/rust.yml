@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Build
       run: cargo build --verbose
     - name: Build Terminal
@@ -30,7 +30,7 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/master'
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Install ARM target
       run: rustup target add aarch64-unknown-linux-gnu && sudo apt install gcc-aarch64-linux-gnu
     - name: Release Build
